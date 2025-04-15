@@ -68,8 +68,37 @@ const addBook = async (req, res) => {
 
 const viewAllBooks = (req, res) => {
   try {
+    let filteredBooks = books;
+
+    // handle if query is using name, handling non case-sensitive
+    if (req.query && req.query.name) {
+      filteredBooks = filteredBooks.filter(
+        (book) => book.name.toLowerCase().includes(req.query.name.toLowerCase()),
+      );
+    }
+
+    // handle if the query is using number 1 or 0, for finished boolean value
+    if (req.query && req.query.finished) {
+      const isFinished = req.query.finished;
+      // use == to handle if it's number or string, to ensure value handling
+      if (isFinished === '1' || isFinished === 1) {
+        filteredBooks = filteredBooks.filter((book) => book.finished === true);
+      } else if (isFinished === '0' || isFinished === 0) {
+        filteredBooks = filteredBooks.filter((book) => book.finished === false);
+      }
+    }
+
+    // handle if the query is using number 1 or 0, for reading boolean value
+    if (req.query && req.query.reading) {
+      const isReading = req.query.reading;
+      if (isReading === '1' || isReading === 1) {
+        filteredBooks = filteredBooks.filter((book) => book.reading === true);
+      } else if (isReading === '0' || isReading === 0) {
+        filteredBooks = filteredBooks.filter((book) => book.reading === false);
+      }
+    }
     // Map the complete books array to a simplified version with only id, name, and publisher
-    const simplifiedBooks = books.map((book) => ({
+    const simplifiedBooks = filteredBooks.map((book) => ({
       id: book.id,
       name: book.name,
       publisher: book.publisher,
@@ -93,7 +122,7 @@ const viewAllBooks = (req, res) => {
 
 const viewBookDetail = (req, res) => {
   const bookId = req.params.id;
-  const foundBook = books.find((b) => b.id === bookId);
+  const foundBook = books.find((book) => book.id === bookId);
   if (foundBook) {
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify({
@@ -144,7 +173,7 @@ const updateBookDetail = (req, res) => {
     foundBook.pageCount = updateBookData.pageCount;
     foundBook.readPage = updateBookData.readPage;
     foundBook.reading = updateBookData.reading;
-    foundBook.updatedAt = new Date().toISOString(); // Add timestamp update
+    foundBook.updatedAt = new Date().toISOString();
 
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify({
@@ -165,7 +194,7 @@ const deleteBookDetail = (req, res) => {
   const bookIndex = books.findIndex((book) => book.id === bookId);
 
   if (bookIndex !== -1) {
-    books.splice(bookIndex, 1); // remove the book from the array
+    books.splice(bookIndex, 1);
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify({
       status: 'success',
